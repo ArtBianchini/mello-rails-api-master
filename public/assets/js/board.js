@@ -1,5 +1,6 @@
 const $logoutButton = $('#logout');
 const $boardContainer = $('.container'); 
+const $boardName = $('header > h1'); 
 
 let board; 
 
@@ -53,6 +54,8 @@ function handleLogout() {
 
 function renderBoard() {
   let $lists = createLists(board.lists);
+
+  $boardName.text(board.name); 
 
   $boardContainer.empty();
   $boardContainer.append($lists);
