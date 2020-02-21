@@ -90,12 +90,11 @@ function handleListCreate(event) {
     MicroModal.close('create-list');
     return;
   }
-
+}
 
 function openCardCreateModal() {
   $createCardInput.val('');
   MicroModal.show('create-card');
-}
 
   $.ajax({
     url: '/api/lists',
