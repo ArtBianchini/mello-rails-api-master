@@ -20,6 +20,8 @@ function init() {
   $('.welcome h1').text('Welcome ' + user.email + '!');
 }
 
+getUserBoards(); 
+
 
 function getUserBoards() {
   $.ajax({

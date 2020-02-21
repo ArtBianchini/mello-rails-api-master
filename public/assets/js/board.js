@@ -1,8 +1,12 @@
 const $logoutButton = $('#logout');
-const $boardContainer = $('.container'); 
-const $boardName = $('header > h1'); 
+const $boardContainer = $('.container');
+const $boardName = $('header > h1');
+const $createListInput = $('#create-list input');
+const $saveListButton = $('#create-list .save');
+const $createCardInput = $('#create-card textarea');
 
-let board; 
+
+let board;
 
 init();
 
@@ -15,15 +19,15 @@ function getBoard(id) {
   $.ajax({
     url: `/api/boards/${id}`,
     method: 'GET'
-  }).then(function(data) {
-    renderBoard(); 
   })
-  .catch(function(err) {
-  	location.replace('/boards');
-  }); 
+    .then(function(data) {
+      board = data;
+      renderBoard();
+    })
+    .catch(function(err) {
+      location.replace('/boards');
+    });
 }
-
-
 
 function handleLogout() {
   $.ajax({
@@ -35,12 +39,15 @@ function handleLogout() {
   });
 }
 
- function createLists(lists) {
+function createLists(lists) {
   let $listContainers = lists.map(function(list) {
     let $listContainer = $('<div class="list">');
     let $header = $('<header>');
     let $headerButton = $('<button>').text(list.title);
-    let $addCardButton = $('<button>Add a card...</button>');
+    let $addCardButton = $('<button>Add a card...</button>').on(
+      'click', 
+      openCardCreateModal
+      ); 
 
     $header.append($headerButton);
     $listContainer.append($header);
@@ -49,18 +56,59 @@ function handleLogout() {
     return $listContainer;
   });
 
+  let $addListContainer = $('<div class="list add">');
+  let $addListButton = $('<button>')
+    .text('+ Add another list')
+    .on('click', openListCreateModal);
+
+  $addListContainer.append($addListButton);
+  $listContainers.push($addListContainer);
+
   return $listContainers;
 }
 
 function renderBoard() {
   let $lists = createLists(board.lists);
 
-  $boardName.text(board.name); 
+  $boardName.text(board.name);
 
   $boardContainer.empty();
   $boardContainer.append($lists);
 }
 
+function openListCreateModal() {
+  $createListInput.val('');
+  MicroModal.show('create-list');
+}
+
+function handleListCreate(event) {
+  event.preventDefault();
+
+  let listTitle = $createListInput.val().trim();
+
+  if (!listTitle) {
+    MicroModal.close('create-list');
+    return;
+  }
 
 
+function openCardCreateModal() {
+  $createCardInput.val('');
+  MicroModal.show('create-card');
+}
+
+  $.ajax({
+    url: '/api/lists',
+    method: 'POST',
+    data: {
+      board_id: board.id,
+      title: listTitle
+    }
+  }).then(function() {
+    init();
+    MicroModal.close('create-list');
+  });
+}
+
+$saveListButton.on('click', handleListCreate);
 $logoutButton.on('click', handleLogout);
