@@ -14,6 +14,7 @@ const $editCardDeleteButton = $('#edit-card .delete');
 const $contributorModalButton = $('#contributors');
 const $contributorModalInput = $('#contributor-email');
 const $contributorModalSaveButton = $('#contribute .save');
+const $contributorModalList = $('#contributors-content ul');
 
 
 let board;
@@ -111,7 +112,19 @@ function renderBoard() {
   $boardContainer.append($lists);
 
   makeSortable(); 
+  renderContributors(); 
 }
+
+function renderContributors() {
+  let $contributorListItems = board.users.map(function(user) {
+    let $contributorListItem = $('<li>').text(user.email);
+    return $contributorListItem;
+  });
+
+  $contributorModalList.empty();
+  $contributorModalList.append($contributorListItems);
+}
+
 
 function makeSortable() {
   Sortable.create($boardContainer[0],{
@@ -325,19 +338,6 @@ function handleCardSave(event) {
   });
 }
 
-
-function handleContributorSave(event) {
-  event.preventDefault();
-
-
-  let contributorEmail = $contributorModalInput.val().trim();
-  let contributor = board.users.find(function(user) {
-    return user.email === contributorEmail;
-  });
-
-  console.log($contributorModalInput.val());
-}
-
 function handleCardDelete(event) {
   event.preventDefault();
 
@@ -352,8 +352,65 @@ function handleCardDelete(event) {
   });
 }
 
+function displayMessage(msg, type) {
+  $('#contribute .message')
+    .attr('class', `message ${type}`)
+    .text(msg);
+}
+
+function handleContributorSave(event) {
+  event.preventDefault();
+
+
+ let emailRegex = /.+@.+\..+/;
+
+  let contributorEmail = $contributorModalInput.val().trim(); 
+    
+  $contributorModalInput.val('');
+
+
+  if (!emailRegex.test(contributorEmail)) {
+   displayMessage(`Must provide a valid email address`, 'danger'); 
+   return;
+  }
+
+  let contributor = board.users.find(function(user) {
+    return user.email === contributorEmail;
+  });
+
+  if (contributor) {
+  displayMessage(
+      `${contributorEmail} already has access to the board`,
+      'danger'
+    );
+    return;
+  }
+
+  $.ajax({
+    url: '/api/user_boards',
+    method: 'POST',
+    data: {
+      email: contributorEmail,
+      board_id: board.id
+    }
+  })
+    .then(function() {
+      init();
+      displayMessage(
+        `Successfully added ${contributorEmail} to the board`,
+        'success'
+      );
+    })
+    .catch(function() {
+      displayMessage(
+        `Cannot find user with email: ${contributorEmail}`,
+        'danger'
+      );
+    });
+}
+
 $contributorModalSaveButton.on('click', handleContributorSave);
-$contributorModalButton.on('click', MicroModal.show.bind(null, 'contribute'));
+$contributorModalButton.on('click', openContributorModal);
 $saveCardButton.on('click', handleCardCreate);
 $logoutButton.on('click', handleLogout);
 $editListSaveButton.on('click', handleListEdit);
