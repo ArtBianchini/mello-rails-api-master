@@ -12,6 +12,8 @@ const $editCardInput = $('#edit-card textarea');
 const $editCardSaveButton = $('#edit-card .save');
 const $editCardDeleteButton = $('#edit-card .delete');
 const $contributorModalButton = $('#contributors');
+const $contributorModalInput = $('#contributor-email');
+const $contributorModalSaveButton = $('#contribute .save');
 
 
 let board;
@@ -172,9 +174,10 @@ function makeSortable() {
       }).then(function() {
         init();
       });
-    }
-  });
-});
+     }
+   });
+ });
+}
 
 
 function openListCreateModal() {
@@ -322,6 +325,19 @@ function handleCardSave(event) {
   });
 }
 
+
+function handleContributorSave(event) {
+  event.preventDefault();
+
+
+  let contributorEmail = $contributorModalInput.val().trim();
+  let contributor = board.users.find(function(user) {
+    return user.email === contributorEmail;
+  });
+
+  console.log($contributorModalInput.val());
+}
+
 function handleCardDelete(event) {
   event.preventDefault();
 
@@ -336,6 +352,7 @@ function handleCardDelete(event) {
   });
 }
 
+$contributorModalSaveButton.on('click', handleContributorSave);
 $contributorModalButton.on('click', MicroModal.show.bind(null, 'contribute'));
 $saveCardButton.on('click', handleCardCreate);
 $logoutButton.on('click', handleLogout);
