@@ -36,7 +36,9 @@ function getBoard(id) {
       renderBoard();
     })
     .catch(function(err) {
-      location.replace('/boards');
+      if (err.statusText === 'Unauthorized') {
+        location.replace('/boards');
+      }
     });
 }
 
@@ -117,7 +119,14 @@ function renderBoard() {
 
 function renderContributors() {
   let $contributorListItems = board.users.map(function(user) {
-    let $contributorListItem = $('<li>').text(user.email);
+    let $contributorListItem = $('<li>');
+    let $contributorSpan = $('<span>').text(user.email);
+    let $contributorDeleteButton = $('<button class="danger">Remove</button>')
+    .data(user)
+    .on('click', handleContributorDelete);
+
+    $contributorListItem.append($contributorSpan, $contributorDeleteButton);
+
     return $contributorListItem;
   });
 
@@ -125,6 +134,21 @@ function renderContributors() {
   $contributorModalList.append($contributorListItems);
 }
 
+function handleContributorDelete() {
+  let { id, email } = $(event.target).data();
+
+  $.ajax({
+    url: '/api/user_boards',
+    method: 'DELETE',
+    data: {
+      user_id: id,
+      board_id: board.id
+    }
+  }).then(function() {
+    init();
+    displayMessage(`Successfully removed user: ${email}`, 'success');
+  });
+}
 
 function makeSortable() {
   Sortable.create($boardContainer[0],{
@@ -352,10 +376,17 @@ function handleCardDelete(event) {
   });
 }
 
-function displayMessage(msg, type) {
+function displayMessage(msg, type = 'hidden') {
   $('#contribute .message')
     .attr('class', `message ${type}`)
     .text(msg);
+}
+
+
+function openContributorModal() {
+  $contributorModalInput.val('');
+  displayMessage('');
+  MicroModal.show('contribute');
 }
 
 function handleContributorSave(event) {
@@ -373,6 +404,7 @@ function handleContributorSave(event) {
    displayMessage(`Must provide a valid email address`, 'danger'); 
    return;
   }
+
 
   let contributor = board.users.find(function(user) {
     return user.email === contributorEmail;
